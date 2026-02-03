@@ -16,7 +16,16 @@ from typing_extensions import Annotated
 
 load_dotenv(override=True)
 
-tavily_client = TavilyClient()
+# Lazy initialization - only create client when needed
+_tavily_client = None
+
+
+def _get_tavily_client() -> TavilyClient:
+    """Get or create the Tavily client (lazy initialization)."""
+    global _tavily_client
+    if _tavily_client is None:
+        _tavily_client = TavilyClient()
+    return _tavily_client
 
 
 async def fetch_webpage_content(url: str, timeout: float = 10.0) -> str:
@@ -67,7 +76,7 @@ async def tavily_search(
     """
 
     def _sync_search() -> dict:
-        return tavily_client.search(
+        return _get_tavily_client().search(
             query,
             max_results=max_results,
             topic=topic,
