@@ -12,37 +12,29 @@ needs_api_key = pytest.mark.skipif(
 def test_import_stream_utils():
     from EvoScientist.stream.utils import (
         is_success,
-        format_tool_compact,
-        truncate,
-        has_args,
-        count_lines,
-        truncate_with_line_hint,
     )
     assert callable(is_success)
 
 
 def test_import_stream_emitter():
-    from EvoScientist.stream.emitter import StreamEventEmitter, StreamEvent
+    from EvoScientist.stream.emitter import StreamEventEmitter
     assert callable(StreamEventEmitter.thinking)
 
 
 def test_import_stream_tracker():
-    from EvoScientist.stream.tracker import ToolCallTracker, ToolCallInfo
+    from EvoScientist.stream.tracker import ToolCallTracker
     assert ToolCallTracker is not None
 
 
 def test_import_backends():
     from EvoScientist.backends import (
         validate_command,
-        convert_virtual_paths_in_command,
-        CustomSandboxBackend,
-        ReadOnlyFilesystemBackend,
     )
     assert callable(validate_command)
 
 
 def test_import_prompts():
-    from EvoScientist.prompts import get_system_prompt, RESEARCHER_INSTRUCTIONS
+    from EvoScientist.prompts import get_system_prompt
     assert callable(get_system_prompt)
 
 
@@ -54,6 +46,6 @@ def test_import_tools():
 
 @needs_api_key
 def test_import_package_exports():
-    from EvoScientist import EvoScientist_agent, create_cli_agent
+    from EvoScientist import EvoScientist_agent
     # Just verify they are importable; don't call them without API key
     assert EvoScientist_agent is not None

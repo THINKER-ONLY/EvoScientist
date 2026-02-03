@@ -1,9 +1,6 @@
 """Tests for EvoScientist/backends.py — validate_command, path conversion, resolve_path."""
 
-import os
-import tempfile
 
-import pytest
 
 from EvoScientist.backends import (
     validate_command,

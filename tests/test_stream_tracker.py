@@ -1,6 +1,6 @@
 """Tests for EvoScientist/stream/tracker.py."""
 
-from EvoScientist.stream.tracker import ToolCallTracker, ToolCallInfo
+from EvoScientist.stream.tracker import ToolCallTracker
 
 
 class TestToolCallTracker:

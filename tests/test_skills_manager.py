@@ -1,15 +1,11 @@
 """Tests for EvoScientist.skills_manager module."""
 
-import os
-import shutil
-import tempfile
 from pathlib import Path
 from unittest import mock
 
 import pytest
 
 from EvoScientist.skills_manager import (
-    SkillInfo,
     _parse_skill_md,
     _parse_github_url,
     _is_github_url,

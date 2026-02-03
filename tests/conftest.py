@@ -1,7 +1,5 @@
 """Shared fixtures for EvoScientist tests."""
 
-import os
-import tempfile
 
 import pytest
 

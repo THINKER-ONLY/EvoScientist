@@ -194,7 +194,7 @@ def _render_subagent_section(sa: 'SubAgentState', compact: bool = False) -> list
             pending.append(tc)
 
     succeeded = sum(1 for _, tr in completed if tr.get("success", True))
-    failed = len(completed) - succeeded
+    _ = len(completed) - succeeded  # failed count, unused for now
 
     # Build display name
     display_name = f"Cooking with {sa.name}"

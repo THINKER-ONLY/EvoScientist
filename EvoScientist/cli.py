@@ -113,7 +113,7 @@ def _cmd_list_skills() -> None:
 
     if not skills:
         console.print("[dim]No user skills installed.[/dim]")
-        console.print(f"[dim]Install with:[/dim] /install-skill <path-or-url>")
+        console.print("[dim]Install with:[/dim] /install-skill <path-or-url>")
         console.print(f"[dim]Skills directory:[/dim] [cyan]{_shorten_path(str(USER_SKILLS_DIR))}[/cyan]")
         console.print()
         return
