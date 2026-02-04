@@ -29,7 +29,7 @@ from rich.text import Text  # type: ignore[import-untyped]
 # Backward-compat re-exports (tests import these from EvoScientist.cli)
 from .stream.state import SubAgentState, StreamState, _parse_todo_items, _build_todo_stats  # noqa: F401
 from .stream.display import console, _run_streaming
-from .paths import ensure_dirs, new_run_dir
+from .paths import ensure_dirs, new_run_dir, default_workspace_dir
 
 
 def _shorten_path(path: str) -> str:
@@ -69,8 +69,9 @@ def print_banner(
     thread_id: str,
     workspace_dir: str | None = None,
     memory_dir: str | None = None,
+    mode: str | None = None,
 ):
-    """Print welcome banner with ASCII art logo, thread ID, and workspace path."""
+    """Print welcome banner with ASCII art logo, thread ID, workspace path, and mode."""
     for line, color in zip(EVOSCIENTIST_ASCII_LINES, _GRADIENT_COLORS):
         console.print(Text(line, style=f"{color} bold"))
     info = Text()
@@ -83,6 +84,9 @@ def print_banner(
         trimmed = memory_dir.rstrip("/").rstrip("\\")
         info.append("\n  Memory dir: ", style="dim")
         info.append(_shorten_path(trimmed), style="cyan")
+    if mode:
+        info.append("\n  Mode: ", style="dim")
+        info.append(mode, style="magenta")
     info.append("\n  Commands: ", style="dim")
     info.append("/exit", style="bold")
     info.append(", ", style="dim")
@@ -182,6 +186,7 @@ def cmd_interactive(
     show_thinking: bool = True,
     workspace_dir: str | None = None,
     workspace_fixed: bool = False,
+    mode: str | None = None,
 ) -> None:
     """Interactive conversation mode with streaming output.
 
@@ -190,11 +195,12 @@ def cmd_interactive(
         show_thinking: Whether to display thinking panels
         workspace_dir: Per-session workspace directory path
         workspace_fixed: If True, /new keeps the same workspace directory
+        mode: Workspace mode ('daemon' or 'run'), displayed in banner
     """
     thread_id = str(uuid.uuid4())
     from .EvoScientist import MEMORY_DIR
     memory_dir = MEMORY_DIR
-    print_banner(thread_id, workspace_dir, memory_dir)
+    print_banner(thread_id, workspace_dir, memory_dir, mode)
 
     history_file = str(os.path.expanduser("~/.EvoScientist_history"))
     session = PromptSession(
@@ -337,11 +343,15 @@ app = typer.Typer(no_args_is_help=False, add_completion=False)
 def _main_callback(
     ctx: typer.Context,
     prompt: Optional[str] = typer.Argument(None, help="Query to execute (single-shot mode)"),
-    interactive: bool = typer.Option(False, "-i", "--interactive", help="Interactive conversation mode"),
     thread_id: Optional[str] = typer.Option(None, "--thread-id", help="Thread ID for conversation persistence"),
     no_thinking: bool = typer.Option(False, "--no-thinking", help="Disable thinking display"),
     workdir: Optional[str] = typer.Option(None, "--workdir", help="Override workspace directory for this session"),
     use_cwd: bool = typer.Option(False, "--use-cwd", help="Use current working directory as workspace"),
+    mode: Optional[str] = typer.Option(
+        None,
+        "--mode",
+        help="Workspace mode: 'daemon' (persistent, default) or 'run' (isolated per-session)"
+    ),
 ):
     """EvoScientist Agent - AI-powered research & code execution CLI."""
     from dotenv import load_dotenv  # type: ignore[import-untyped]
@@ -349,10 +359,23 @@ def _main_callback(
 
     show_thinking = not no_thinking
 
+    # Validate mutually exclusive options
     if workdir and use_cwd:
         raise typer.BadParameter("Use either --workdir or --use-cwd, not both.")
 
+    if mode and (workdir or use_cwd):
+        raise typer.BadParameter("--mode cannot be combined with --workdir or --use-cwd")
+
+    if mode and mode not in ("run", "daemon"):
+        raise typer.BadParameter("--mode must be 'run' or 'daemon'")
+
     ensure_dirs()
+
+    # Resolve effective mode (daemon is default)
+    default_mode = os.getenv("EVOSCIENTIST_DEFAULT_MODE", "daemon")
+    if default_mode not in ("run", "daemon"):
+        default_mode = "daemon"
+    effective_mode: str | None = None  # None means explicit --workdir/--use-cwd was used
 
     # Resolve workspace directory for this session
     if use_cwd:
@@ -363,29 +386,30 @@ def _main_callback(
         os.makedirs(workspace_dir, exist_ok=True)
         workspace_fixed = True
     else:
-        workspace_dir = _create_session_workspace()
-        workspace_fixed = False
+        effective_mode = mode or default_mode
+        if effective_mode == "run":
+            workspace_dir = _create_session_workspace()
+            workspace_fixed = False
+        else:  # daemon mode (default)
+            workspace_dir = str(default_workspace_dir())
+            os.makedirs(workspace_dir, exist_ok=True)
+            workspace_fixed = True
 
     # Load agent with session workspace
     console.print("[dim]Loading agent...[/dim]")
     agent = _load_agent(workspace_dir=workspace_dir)
 
-    if interactive:
-        cmd_interactive(
-            agent,
-            show_thinking=show_thinking,
-            workspace_dir=workspace_dir,
-            workspace_fixed=workspace_fixed,
-        )
-    elif prompt:
+    if prompt:
+        # Single-shot mode: execute query and exit
         cmd_run(agent, prompt, thread_id=thread_id, show_thinking=show_thinking, workspace_dir=workspace_dir)
     else:
-        # Default: interactive mode
+        # Interactive mode (default)
         cmd_interactive(
             agent,
             show_thinking=show_thinking,
             workspace_dir=workspace_dir,
             workspace_fixed=workspace_fixed,
+            mode=effective_mode,
         )
 
 
