@@ -22,7 +22,6 @@ venv/
 .claude/
 .cursor/
 .cursorrules
-.evoscientist/
 
 # Project specific
 .langgraph_api/

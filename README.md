@@ -160,30 +160,25 @@ EvoSci # or EvoScientist
 
 ### Runtime Directories
 
-By default, the **workspace** is created under a hidden directory in the current
-project directory:
+By default, the **workspace** is created under the current directory:
 
 ```
-./.evoscientist/workspace/
-  memory/   # shared MEMORY.md
+./workspace/
+  memory/   # shared MEMORY.md (persistent across sessions)
   skills/   # user-installed skills
-  runs/     # per-thread workspaces
+  runs/     # per-session workspaces
 ```
 
 You can force workspace to be the current directory via `--use-cwd`.
 
-If you set `EVOSCIENTIST_HOME`, EvoScientist will place `workspace/` under that
-directory instead of the project root:
+Override individual paths via environment variables:
 
-Example with `EVOSCIENTIST_HOME=~/.evoscientist`:
-
-```
-~/.evoscientist/
-  workspace/
-    memory/
-    skills/
-    runs/
-```
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `EVOSCIENTIST_WORKSPACE_DIR` | `./workspace` | Root workspace directory |
+| `EVOSCIENTIST_RUNS_DIR` | `./workspace/runs` | Per-session run directories |
+| `EVOSCIENTIST_MEMORY_DIR` | `./workspace/memory` | Shared memory storage |
+| `EVOSCIENTIST_SKILLS_DIR` | `./workspace/skills` | User-installed skills |
 
 ### Script Inference
 ```python
