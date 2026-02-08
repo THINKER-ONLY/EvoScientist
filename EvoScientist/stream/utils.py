@@ -64,18 +64,27 @@ def has_args(args) -> bool:
 
 
 def is_success(content: str) -> bool:
-    """Determine if tool output indicates successful execution."""
+    """Determine if tool output indicates successful execution.
+
+    Only checks the first few lines of output for error patterns to avoid
+    false positives from code/docs that contain "Error:" as literal text.
+    """
     content = content.strip()
     if content.startswith(SUCCESS_PREFIX):
         return True
     if content.startswith(FAILURE_PREFIX):
         return False
+    # Only check the first 3 lines — real tool errors appear at the top,
+    # not buried deep inside file content or command output.
+    head = "\n".join(content.splitlines()[:3])
     error_patterns = [
         'Traceback (most recent call last)',
         'Exception:',
         'Error:',
+        'Error invoking tool',
+        'Failed ',
     ]
-    return not any(pattern in content for pattern in error_patterns)
+    return not any(pattern in head for pattern in error_patterns)
 
 
 def truncate(content: str, max_length: int, suffix: str = "\n... (truncated)") -> str:

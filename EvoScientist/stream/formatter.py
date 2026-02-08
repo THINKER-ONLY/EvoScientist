@@ -109,12 +109,15 @@ class ToolResultFormatter:
         return False
 
     def _is_error(self, content: str) -> bool:
+        head = "\n".join(content.splitlines()[:3])
         error_patterns = [
             'Traceback (most recent call last)',
             'Exception:',
             'Error:',
+            'Error invoking tool',
+            'Failed ',
         ]
-        return any(pattern in content for pattern in error_patterns)
+        return any(pattern in head for pattern in error_patterns)
 
     def _is_markdown(self, content: str) -> bool:
         md_patterns = ['```', '**', '##', '- **']

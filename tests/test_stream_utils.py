@@ -35,6 +35,31 @@ class TestIsSuccess:
     def test_whitespace_stripped(self):
         assert is_success("  [OK] with spaces  ") is True
 
+    def test_error_in_code_content_not_false_positive(self):
+        # read_file returning code with "Error:" deep inside should be success
+        content = '#!/usr/bin/env python3\n"""\nSkill Packager\n"""\n\nprint(f"Error: not found")'
+        assert is_success(content) is True
+
+    def test_error_on_line4_not_false_positive(self):
+        content = "line1\nline2\nline3\nError: buried deep\nline5"
+        assert is_success(content) is True
+
+    def test_error_on_first_line(self):
+        assert is_success("Error: file not found\nsome detail") is False
+
+    def test_error_invoking_tool(self):
+        assert is_success("Error invoking tool 'write_file'") is False
+
+    def test_failed_to_uninstall(self):
+        assert is_success("Failed to uninstall skill: Skill not found: latex-paper-en") is False
+
+    def test_failed_to_install(self):
+        assert is_success("Failed to install skill: git clone failed: ...") is False
+
+    def test_failed_in_code_content_not_false_positive(self):
+        content = '#!/usr/bin/env python3\n"""Helper"""\n\nif x:\n    print("Failed to connect")'
+        assert is_success(content) is True
+
 
 # === format_tool_compact ===
 
