@@ -41,7 +41,7 @@ from langchain.agents.middleware.types import (
     PrivateStateAttr,
 )
 from langchain.tools import ToolRuntime
-from langchain_core.messages import AnyMessage, HumanMessage, AIMessage
+from langchain_core.messages import AnyMessage, HumanMessage, filter_messages
 from langchain_core.runnables.config import RunnableConfig
 from langgraph.runtime import Runtime
 
@@ -540,69 +540,47 @@ class EvoMemoryMiddleware(AgentMiddleware):
 
     # -- extraction ----------------------------------------------------------
 
-    def _extract(self, model: BaseChatModel, memory: str, messages: list[AnyMessage]) -> dict[str, Any]:
-        """Run LLM extraction on recent messages."""
-        import json
-
-        # Build conversation string from recent messages (last 30)
-        recent = messages[-30:]
+    @staticmethod
+    def _build_extraction_prompt(memory: str, messages: list[AnyMessage]) -> str:
+        """Build the extraction prompt from recent human/AI messages."""
+        recent = filter_messages(messages[-30:], include_types=["human", "ai"])
         conv_parts = []
         for msg in recent:
-            if isinstance(msg, HumanMessage):
-                role = "user"
-            elif isinstance(msg, AIMessage):
-                role = "assistant"
-            else:
-                continue
+            role = "user" if isinstance(msg, HumanMessage) else "assistant"
             content = msg.content if isinstance(msg.content, str) else str(msg.content)
             conv_parts.append(f"[{role}]: {content}")
-        conversation = "\n".join(conv_parts)
-
-        prompt = EXTRACTION_PROMPT.format(
+        return EXTRACTION_PROMPT.format(
             current_memory=memory,
-            conversation=conversation,
+            conversation="\n".join(conv_parts),
         )
 
+    @staticmethod
+    def _parse_extraction_response(text: str) -> dict[str, Any]:
+        """Parse JSON from an LLM extraction response."""
+        import json
+
+        json_match = re.search(r"```(?:json)?\s*([\s\S]*?)```", text)
+        if json_match:
+            text = json_match.group(1)
+        return json.loads(text.strip())
+
+    def _extract(self, model: BaseChatModel, memory: str, messages: list[AnyMessage]) -> dict[str, Any]:
+        """Run LLM extraction on recent messages."""
+        prompt = self._build_extraction_prompt(memory, messages)
         try:
             response = model.invoke(prompt)
             text = response.content if isinstance(response.content, str) else str(response.content)
-            # Extract JSON from response (may be wrapped in ```json ... ```)
-            json_match = re.search(r"```(?:json)?\s*([\s\S]*?)```", text)
-            if json_match:
-                text = json_match.group(1)
-            return json.loads(text.strip())
+            return self._parse_extraction_response(text)
         except Exception as e:  # noqa: BLE001
             logger.warning("Memory extraction failed: %s", e)
             return {}
 
     async def _aextract(self, model: BaseChatModel, memory: str, messages: list[AnyMessage]) -> dict[str, Any]:
-        import json
-
-        recent = messages[-30:]
-        conv_parts = []
-        for msg in recent:
-            if isinstance(msg, HumanMessage):
-                role = "user"
-            elif isinstance(msg, AIMessage):
-                role = "assistant"
-            else:
-                continue
-            content = msg.content if isinstance(msg.content, str) else str(msg.content)
-            conv_parts.append(f"[{role}]: {content}")
-        conversation = "\n".join(conv_parts)
-
-        prompt = EXTRACTION_PROMPT.format(
-            current_memory=memory,
-            conversation=conversation,
-        )
-
+        prompt = self._build_extraction_prompt(memory, messages)
         try:
             response = await model.ainvoke(prompt)
             text = response.content if isinstance(response.content, str) else str(response.content)
-            json_match = re.search(r"```(?:json)?\s*([\s\S]*?)```", text)
-            if json_match:
-                text = json_match.group(1)
-            return json.loads(text.strip())
+            return self._parse_extraction_response(text)
         except Exception as e:  # noqa: BLE001
             logger.warning("Memory extraction failed: %s", e)
             return {}

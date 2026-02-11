@@ -189,21 +189,41 @@ base_middleware = [
 ]
 
 # Default agent (no checkpointer) — used by langgraph dev / LangSmith / notebooks.
-# Built WITHOUT MCP at import time to avoid spawning subprocesses on every import.
-# MCP tools are loaded on-demand in create_cli_agent().
-_AGENT_KWARGS = _build_base_kwargs(backend, base_middleware)
-EvoScientist_agent = create_deep_agent(**_AGENT_KWARGS).with_config({"recursion_limit": 500})
+# Lazily constructed on first access so MCP tools are included without
+# spawning subprocesses at import time.
+_EvoScientist_agent = None
 
 
-def create_cli_agent(workspace_dir: str | None = None):
-    """Create agent with InMemorySaver checkpointer for CLI multi-turn support.
+def _get_default_agent():
+    """Build the default agent (with MCP, no checkpointer) on first access."""
+    global _EvoScientist_agent
+    if _EvoScientist_agent is None:
+        kwargs = load_mcp_and_build_kwargs(backend, base_middleware)
+        _EvoScientist_agent = create_deep_agent(**kwargs).with_config(
+            {"recursion_limit": 500}
+        )
+    return _EvoScientist_agent
+
+
+def __getattr__(name: str):
+    if name == "EvoScientist_agent":
+        return _get_default_agent()
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+
+
+def create_cli_agent(workspace_dir: str | None = None, checkpointer=None):
+    """Create agent with checkpointer for CLI multi-turn support.
 
     Args:
         workspace_dir: Optional per-session workspace directory. If provided,
             creates a fresh backend rooted at this path. If None, uses the
             module-level default backend (./workspace).
+        checkpointer: Optional LangGraph checkpointer. If None, falls back
+            to ``InMemorySaver`` (non-persistent).
     """
-    from langgraph.checkpoint.memory import InMemorySaver  # type: ignore[import-untyped]
+    if checkpointer is None:
+        from langgraph.checkpoint.memory import InMemorySaver  # type: ignore[import-untyped]
+        checkpointer = InMemorySaver()
 
     if workspace_dir:
         set_active_workspace(workspace_dir)
@@ -241,5 +261,5 @@ def create_cli_agent(workspace_dir: str | None = None):
 
     return create_deep_agent(
         **kwargs,
-        checkpointer=InMemorySaver(),
+        checkpointer=checkpointer,
     ).with_config({"recursion_limit": 500})
