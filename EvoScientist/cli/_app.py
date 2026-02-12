@@ -14,7 +14,7 @@ app.add_typer(config_app, name="config")
 
 # MCP subcommand group
 _MCP_HELP = """\
-Configure and manage MCP servers.
+Configure and manage MCP servers
 
 Examples:
   # Add a local MCP server (stdio auto-detected):

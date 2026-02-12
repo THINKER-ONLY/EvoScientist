@@ -36,7 +36,7 @@ def onboard(
         help="Skip API key validation during setup"
     ),
 ):
-    """Interactive setup wizard for EvoScientist.
+    """Interactive setup wizard for EvoScientist
 
     Guides you through configuring API keys, model selection,
     workspace settings, and agent parameters.
@@ -51,14 +51,14 @@ def onboard(
 
 @config_app.callback(invoke_without_command=True)
 def config_callback(ctx: typer.Context):
-    """Configuration management commands."""
+    """Configuration management commands"""
     if ctx.invoked_subcommand is None:
         config_list()
 
 
 @config_app.command("list")
 def config_list():
-    """List all configuration values."""
+    """List all configuration values"""
     from ..config import list_config, get_config_path
 
     config_data = list_config()
@@ -84,7 +84,7 @@ def config_list():
 
 @config_app.command("get")
 def config_get(key: str = typer.Argument(..., help="Configuration key to get")):
-    """Get a single configuration value."""
+    """Get a single configuration value"""
     from ..config import get_config_value
 
     value = get_config_value(key)
@@ -108,7 +108,7 @@ def config_set(
     key: str = typer.Argument(..., help="Configuration key to set"),
     value: str = typer.Argument(..., help="New value"),
 ):
-    """Set a single configuration value."""
+    """Set a single configuration value"""
     from ..config import set_config_value
 
     if set_config_value(key, value):
@@ -122,7 +122,7 @@ def config_set(
 def config_reset(
     yes: bool = typer.Option(False, "--yes", "-y", help="Skip confirmation prompt"),
 ):
-    """Reset configuration to defaults."""
+    """Reset configuration to defaults"""
     from ..config import reset_config, get_config_path
 
     config_path = get_config_path()
@@ -143,7 +143,7 @@ def config_reset(
 
 @config_app.command("path")
 def config_path():
-    """Show the configuration file path."""
+    """Show the configuration file path"""
     from ..config import get_config_path
 
     path = get_config_path()
@@ -158,14 +158,14 @@ def config_path():
 
 @mcp_app.callback(invoke_without_command=True)
 def mcp_callback(ctx: typer.Context):
-    """MCP server management commands."""
+    """MCP server management commands"""
     if ctx.invoked_subcommand is None:
         mcp_list()
 
 
 @mcp_app.command("list")
 def mcp_list():
-    """List configured MCP servers."""
+    """List configured MCP servers"""
     _mcp_list_servers()
 
 
@@ -173,7 +173,7 @@ def mcp_list():
 def mcp_config(
     name: Optional[str] = typer.Argument(None, help="Server name (omit to show all)"),
 ):
-    """Show detailed configuration for MCP servers.
+    """Show detailed configuration for MCP servers
 
     \b
     Examples:
@@ -200,7 +200,7 @@ def mcp_add(
     env: Optional[list[str]] = typer.Option(None, "--env", help="Env var as KEY=VALUE for stdio (repeatable)"),
     env_ref: Optional[list[str]] = typer.Option(None, "--env-ref", help="Env var name as ${NAME} runtime ref (repeatable)"),
 ):
-    """Add an MCP server to user config.
+    """Add an MCP server to user config
 
     \b
     Transport is auto-detected: URLs default to http, commands default to stdio.
@@ -249,7 +249,7 @@ def mcp_edit(
     header: Optional[list[str]] = typer.Option(None, "--header", "-H", help="HTTP header as Key:Value (repeatable)"),
     env: Optional[list[str]] = typer.Option(None, "--env", help="Env var as KEY=VALUE for stdio (repeatable)"),
 ):
-    """Edit an existing MCP server in user config.
+    """Edit an existing MCP server in user config
 
     \b
     Examples:
@@ -278,7 +278,7 @@ def mcp_edit(
 def mcp_remove(
     name: str = typer.Argument(..., help="Server name to remove"),
 ):
-    """Remove an MCP server from user config."""
+    """Remove an MCP server from user config"""
     if not _mcp_remove_server(name, show_reload_hint=False):
         raise typer.Exit(1)
 
@@ -308,7 +308,7 @@ def _main_callback(
     use_cwd: bool = typer.Option(False, "--use-cwd", help="Use current working directory as workspace"),
     no_thinking: bool = typer.Option(False, "--no-thinking", help="Disable thinking display"),
 ):
-    """EvoScientist Agent - AI-powered research & code execution CLI."""
+    """EvoScientist Agent - AI-powered research & code execution CLI"""
     # If a subcommand was invoked, don't run the default behavior
     if ctx.invoked_subcommand is not None:
         return

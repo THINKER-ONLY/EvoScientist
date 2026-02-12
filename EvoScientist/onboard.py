@@ -9,6 +9,7 @@ from __future__ import annotations
 import os
 import subprocess
 import sys
+from pathlib import Path
 
 import questionary
 from prompt_toolkit.formatted_text import FormattedText
@@ -42,6 +43,7 @@ WIZARD_STYLE = Style.from_dict({
     "highlighted": "noreverse bold",      # No background, bold text
     "selected": "fg:#4caf50 bold",        # Green ● indicator
     "separator": "fg:#6c6c6c",            # Dim separator
+    "disabled": "fg:#858585",             # Dim disabled indicator (-)
     "instruction": "fg:#858585",          # Dim instructions
     "text": "fg:#858585",                 # Dim gray ○ and unselected text
 })
@@ -55,6 +57,38 @@ CONFIRM_STYLE = Style.from_dict({
 })
 
 QMARK = "❯"
+
+# Installed-item indicator style for disabled checkbox choices.
+_INSTALLED_INDICATOR = ("fg:#4caf50", "✓ ")
+
+
+def _checkbox_ask(choices, message: str, **kwargs):
+    """``questionary.checkbox`` that renders disabled items with ✓ instead of ``-``.
+
+    Temporarily patches the rendering so the hard-coded ``"- "`` prefix for
+    disabled choices is replaced by a green ``"✓ "`` — keeping alignment with
+    the ``○`` indicator of normal choices.
+    """
+    from questionary.prompts.common import InquirerControl
+
+    original = InquirerControl._get_choice_tokens
+
+    def _patched(self):
+        tokens = original(self)
+        return [
+            _INSTALLED_INDICATOR
+            if cls == "class:disabled" and text == "- "
+            else (cls, text)
+            for cls, text in tokens
+        ]
+
+    InquirerControl._get_choice_tokens = _patched
+    try:
+        return questionary.checkbox(
+            message, choices=choices, style=WIZARD_STYLE, qmark=QMARK, **kwargs,
+        ).ask()
+    finally:
+        InquirerControl._get_choice_tokens = original
 
 STEPS = ["Provider", "API Key", "Model", "Tavily Key", "Workspace", "Parameters", "Skills", "MCP Servers", "Channels"]
 
@@ -757,24 +791,53 @@ def _ensure_npx(reason: str) -> bool:
 def _step_skills() -> list[str]:
     """Step 7: Optionally install recommended skills.
 
-    Shows checkbox first. If user selects nothing, checks npx as an
-    easter egg — confirms skill discovery is available, or offers to
-    install Node.js if missing.
+    Shows checkbox first. Already-installed skills are shown as disabled
+    so users don't accidentally reinstall them. If user selects nothing,
+    checks npx as an easter egg — confirms skill discovery is available,
+    or offers to install Node.js if missing.
 
     Returns:
         List of skill sources that were selected (empty if skipped).
     """
-    choices = [
-        Choice(title=skill["label"], value=skill["source"])
-        for skill in _RECOMMENDED_SKILLS
-    ]
+    from .paths import USER_SKILLS_DIR
 
-    selected = questionary.checkbox(
-        "Install predefined skills:",
-        choices=choices,
-        style=WIZARD_STYLE,
-        qmark=QMARK,
-    ).ask()
+    # Collect names of already-installed user skills
+    skills_dir = Path(USER_SKILLS_DIR)
+    installed_names: set[str] = set()
+    if skills_dir.exists():
+        installed_names = {e.name for e in skills_dir.iterdir() if e.is_dir()}
+
+    def _hint_name(source: str) -> str:
+        """Derive expected skill directory name from source URL."""
+        if "@" in source and "://" not in source:
+            return source.split("@", 1)[1].strip()
+        return source.rstrip("/").rsplit("/", 1)[-1]
+
+    choices = []
+    for skill in _RECOMMENDED_SKILLS:
+        if _hint_name(skill["source"]) in installed_names:
+            choices.append(
+                Choice(
+                    title=[
+                        ("", skill["label"]),
+                        ("class:instruction", "  (already installed)"),
+                    ],
+                    value=skill["source"],
+                    disabled=True,
+                )
+            )
+        else:
+            choices.append(Choice(title=skill["label"], value=skill["source"]))
+
+    all_installed = all(
+        _hint_name(skill["source"]) in installed_names
+        for skill in _RECOMMENDED_SKILLS
+    )
+    if all_installed:
+        console.print("  [green]✓ All recommended skills are already installed.[/green]")
+        return []
+
+    selected = _checkbox_ask(choices, "Install predefined skills:")
 
     if selected is None:
         raise KeyboardInterrupt()
@@ -896,9 +959,12 @@ def _step_mcp_servers() -> list[str]:
         if srv["name"] in existing_config:
             choices.append(
                 Choice(
-                    title=srv["label"],
+                    title=[
+                        ("", srv["label"]),
+                        ("class:instruction", "  (already configured)"),
+                    ],
                     value=srv["name"],
-                    disabled="already configured",
+                    disabled=True,
                 )
             )
         else:
@@ -909,12 +975,7 @@ def _step_mcp_servers() -> list[str]:
         console.print("  [green]✓ All recommended MCP servers are already configured.[/green]")
         return []
 
-    selected = questionary.checkbox(
-        "Install recommended MCP servers:",
-        choices=choices,
-        style=WIZARD_STYLE,
-        qmark=QMARK,
-    ).ask()
+    selected = _checkbox_ask(choices, "Install recommended MCP servers:")
 
     if selected is None:
         raise KeyboardInterrupt()
