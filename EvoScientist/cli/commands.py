@@ -416,7 +416,7 @@ def _main_callback(
                 console.print("[dim]Loading agent...[/dim]")
                 agent = _load_agent(workspace_dir=workspace_dir, checkpointer=checkpointer)
                 tid = thread_id or generate_thread_id()
-                cmd_run(agent, prompt, thread_id=tid, show_thinking=show_thinking, workspace_dir=workspace_dir)
+                cmd_run(agent, prompt, thread_id=tid, show_thinking=show_thinking, workspace_dir=workspace_dir, model=config.model)
 
         import nest_asyncio  # type: ignore[import-untyped]
         nest_asyncio.apply()

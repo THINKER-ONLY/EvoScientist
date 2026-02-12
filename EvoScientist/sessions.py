@@ -229,18 +229,22 @@ async def get_most_recent() -> str | None:
 
 
 async def thread_exists(thread_id: str) -> bool:
-    """Return ``True`` if *thread_id* has at least one checkpoint."""
+    """Return ``True`` if *thread_id* has at least one EvoScientist checkpoint."""
     db_path = str(get_db_path())
     async with aiosqlite.connect(db_path, timeout=30.0) as conn:
         if not await _table_exists(conn, "checkpoints"):
             return False
-        query = "SELECT 1 FROM checkpoints WHERE thread_id = ? LIMIT 1"
-        async with conn.execute(query, (thread_id,)) as cur:
+        query = """
+            SELECT 1 FROM checkpoints
+            WHERE thread_id = ? AND json_extract(metadata, '$.agent_name') = ?
+            LIMIT 1
+        """
+        async with conn.execute(query, (thread_id, AGENT_NAME)) as cur:
             return (await cur.fetchone()) is not None
 
 
 async def find_similar_threads(thread_id: str, limit: int = 5) -> list[str]:
-    """Find thread IDs that start with *thread_id* (prefix match)."""
+    """Find EvoScientist thread IDs that start with *thread_id* (prefix match)."""
     db_path = str(get_db_path())
     async with aiosqlite.connect(db_path, timeout=30.0) as conn:
         if not await _table_exists(conn, "checkpoints"):
@@ -249,22 +253,24 @@ async def find_similar_threads(thread_id: str, limit: int = 5) -> list[str]:
             SELECT DISTINCT thread_id
             FROM checkpoints
             WHERE thread_id LIKE ?
+              AND json_extract(metadata, '$.agent_name') = ?
             ORDER BY thread_id
             LIMIT ?
         """
-        async with conn.execute(query, (thread_id + "%", limit)) as cur:
+        async with conn.execute(query, (thread_id + "%", AGENT_NAME, limit)) as cur:
             rows = await cur.fetchall()
             return [r[0] for r in rows]
 
 
 async def delete_thread(thread_id: str) -> bool:
-    """Delete all checkpoints (and writes) for *thread_id*."""
+    """Delete all EvoScientist checkpoints (and writes) for *thread_id*."""
     db_path = str(get_db_path())
     async with aiosqlite.connect(db_path, timeout=30.0) as conn:
         if not await _table_exists(conn, "checkpoints"):
             return False
         cur = await conn.execute(
-            "DELETE FROM checkpoints WHERE thread_id = ?", (thread_id,)
+            "DELETE FROM checkpoints WHERE thread_id = ? AND json_extract(metadata, '$.agent_name') = ?",
+            (thread_id, AGENT_NAME),
         )
         deleted = cur.rowcount > 0
         if await _table_exists(conn, "writes"):
@@ -288,10 +294,11 @@ async def get_thread_metadata(thread_id: str) -> dict | None:
                    json_extract(metadata, '$.updated_at') as updated_at
             FROM checkpoints
             WHERE thread_id = ?
+              AND json_extract(metadata, '$.agent_name') = ?
             ORDER BY checkpoint_id DESC
             LIMIT 1
         """
-        async with conn.execute(query, (thread_id,)) as cur:
+        async with conn.execute(query, (thread_id, AGENT_NAME)) as cur:
             row = await cur.fetchone()
             if not row:
                 return None
@@ -305,11 +312,21 @@ async def get_thread_metadata(thread_id: str) -> dict | None:
 async def get_thread_messages(thread_id: str) -> list:
     """Return the list of LangChain message objects for *thread_id*.
 
+    Only returns messages for EvoScientist threads.
     Returns an empty list if the thread has no checkpoints.
     """
     db_path = str(get_db_path())
-    serde = JsonPlusSerializer()
     async with aiosqlite.connect(db_path, timeout=30.0) as conn:
         if not await _table_exists(conn, "checkpoints"):
             return []
+        # Verify this thread belongs to EvoScientist before loading messages
+        check = """
+            SELECT 1 FROM checkpoints
+            WHERE thread_id = ? AND json_extract(metadata, '$.agent_name') = ?
+            LIMIT 1
+        """
+        async with conn.execute(check, (thread_id, AGENT_NAME)) as cur:
+            if not await cur.fetchone():
+                return []
+        serde = JsonPlusSerializer()
         return await _load_checkpoint_messages(conn, thread_id, serde)

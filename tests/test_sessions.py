@@ -212,6 +212,23 @@ class TestThreadFunctions(unittest.TestCase):
     def test_delete_nonexistent(self):
         self.assertFalse(_run(delete_thread("nope1234")))
 
+    # -- Agent isolation: OtherAgent data should never be visible --
+
+    def test_thread_exists_ignores_other_agent(self):
+        self.assertFalse(_run(thread_exists("zzz99999")))
+
+    def test_find_similar_ignores_other_agent(self):
+        similar = _run(find_similar_threads("zzz"))
+        self.assertEqual(len(similar), 0)
+
+    def test_get_metadata_ignores_other_agent(self):
+        meta = _run(get_thread_metadata("zzz99999"))
+        self.assertIsNone(meta)
+
+    def test_delete_ignores_other_agent(self):
+        # Should not delete OtherAgent's data
+        self.assertFalse(_run(delete_thread("zzz99999")))
+
 
 if __name__ == "__main__":
     unittest.main()

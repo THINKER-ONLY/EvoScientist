@@ -11,8 +11,8 @@
 
 [![PyPI](https://img.shields.io/badge/PyPI-EvoScientist%20v0.0.1-3da9fc?style=for-the-badge&logo=python&logoColor=3da9fc)](https://pypi.org/project/EvoScientist/)
 [![Project Page](https://img.shields.io/badge/Project-Page-ff8e3c?style=for-the-badge&logo=googlelens&logoColor=ff8e3c)]()
-[![arXiv](https://img.shields.io/badge/arXiv-xxxx.xxxx-b31b1b?style=for-the-badge&logo=arxiv&logoColor=b31b1b)]()
 [![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)]()
+<!-- [![arXiv](https://img.shields.io/badge/arXiv-xxxx.xxxx-b31b1b?style=for-the-badge&logo=arxiv&logoColor=b31b1b)]() -->
 <!-- [![Gradio Demo](https://img.shields.io/badge/Gradio-Online_Demo-FFCC00?style=for-the-badge&logo=gradio&logoColor=yellow&labelColor=grey)]()
 [![Evaluation Split](https://img.shields.io/badge/HF-Test_Dataset-AECBFA?style=for-the-badge&logo=huggingface&logoColor=FFCC00&labelColor=grey)]() -->
 
@@ -39,7 +39,7 @@
 - [📊 Evaluation](#-evaluation)
 - [📝 Citation](#-citation)
 - [📚 Acknowledgments](#-acknowledgments)
-- [📦 Codebase Contributors](#-codebase-contributors)
+- [📦 EvoScientist Team](#-evoscientist-team)
 - [📜 License](#-license)
 
 ## 🤖 Supported Models
@@ -439,11 +439,20 @@ This project builds upon the following outstanding open-source works:
 We thank the authors for their valuable contributions to the open-source community.
 
 
-## 📦 Codebase Contributors
+## 📦 EvoScientist Team
 
 <table>
   <tbody>
     <tr>
+      <td align="center">
+        <a href="https://x-izhang.github.io/">
+          <img src="https://x-izhang.github.io/author/xi-zhang/avatar_hu13660783057866068725.jpg"
+               width="100" height="100"
+               style="object-fit: cover; border-radius: 20%;" alt="Xi Zhang"/>
+          <br />
+          <sub><b>Xi Zhang</b><sup>†</sup></sub>
+        </a>
+      </td>
       <td align="center">
         <a href="https://youganglyu.github.io/">
           <img src="https://youganglyu.github.io/images/profile.png"
@@ -451,15 +460,6 @@ We thank the authors for their valuable contributions to the open-source communi
                style="object-fit: cover; border-radius: 20%;" alt="Yougang Lyu"/>
           <br />
           <sub><b>Yougang Lyu</b></sub>
-        </a>
-      </td>
-      <td align="center">
-        <a href="https://x-izhang.github.io/">
-          <img src="https://x-izhang.github.io/author/xi-zhang/avatar_hu13660783057866068725.jpg"
-               width="100" height="100"
-               style="object-fit: cover; border-radius: 20%;" alt="Xi Zhang"/>
-          <br />
-          <sub><b>Xi Zhang</b></sub>
         </a>
       </td>
       <td align="center">
@@ -475,7 +475,9 @@ We thank the authors for their valuable contributions to the open-source communi
   </tbody>
 </table>
 
-For any enquiries or collaboration opportunities, please contact: [**youganglyu@gmail.com**](mailto:youganglyu@gmail.com)
+<sup>†</sup> Project Leader
+
+For any enquiries or collaboration opportunities, please contact: [**EvoScientist.ai@gmail.com**](mailto:evoscientist.ai@gmail.com)
 
 ## 📜 License
 
