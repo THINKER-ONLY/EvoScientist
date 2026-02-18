@@ -1,6 +1,5 @@
 """Tests for DingTalk channel implementation."""
 
-import asyncio
 import json
 from unittest.mock import AsyncMock, MagicMock
 
@@ -10,13 +9,7 @@ from EvoScientist.channels.dingtalk.channel import DingTalkChannel, DingTalkConf
 from EvoScientist.channels.base import ChannelError, OutboundMessage
 
 
-def _run(coro):
-    """Run an async coroutine safely, creating a fresh event loop."""
-    loop = asyncio.new_event_loop()
-    try:
-        return loop.run_until_complete(coro)
-    finally:
-        loop.close()
+from tests.conftest import run_async as _run
 
 
 class TestDingTalkConfig:

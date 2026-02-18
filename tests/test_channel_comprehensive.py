@@ -46,12 +46,7 @@ from EvoScientist.channels.formatter import convert_markdown
 # Helpers
 # ═══════════════════════════════════════════════════════════════════
 
-def _run(coro):
-    loop = asyncio.new_event_loop()
-    try:
-        return loop.run_until_complete(coro)
-    finally:
-        loop.close()
+from tests.conftest import run_async as _run
 
 
 @dataclass

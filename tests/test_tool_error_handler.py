@@ -1,6 +1,5 @@
 """Tests for ToolErrorHandlerMiddleware."""
 
-import asyncio
 from unittest.mock import MagicMock
 
 import pytest
@@ -150,8 +149,10 @@ class TestWrapToolCallAsync:
     def setup_method(self):
         self.mw = ToolErrorHandlerMiddleware()
 
-    def _run(self, coro):
-        return asyncio.get_event_loop().run_until_complete(coro)
+    @staticmethod
+    def _run(coro):
+        from tests.conftest import run_async
+        return run_async(coro)
 
     def test_success_passes_through(self):
         expected = ToolMessage(content="ok", tool_call_id="tc_001", name="t")

@@ -13,13 +13,7 @@ from EvoScientist.channels.channel_manager import ChannelManager
 from EvoScientist.channels.base import Channel, OutgoingMessage
 
 
-def _run(coro):
-    """Run an async coroutine safely, creating a fresh event loop."""
-    loop = asyncio.new_event_loop()
-    try:
-        return loop.run_until_complete(coro)
-    finally:
-        loop.close()
+from tests.conftest import run_async as _run
 
 
 def _drain_queue(q):

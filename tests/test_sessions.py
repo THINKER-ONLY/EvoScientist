@@ -1,6 +1,5 @@
 """Tests for EvoScientist.sessions — thread CRUD, ID generation, helpers."""
 
-import asyncio
 import json
 import os
 import tempfile
@@ -21,16 +20,7 @@ from EvoScientist.sessions import (
 )
 
 
-def _run(coro):
-    """Run an async coroutine synchronously (resilient to closed loops)."""
-    try:
-        loop = asyncio.get_event_loop()
-        if loop.is_closed():
-            raise RuntimeError("closed")
-    except RuntimeError:
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-    return loop.run_until_complete(coro)
+from tests.conftest import run_async as _run
 
 
 class TestGenerateThreadId(unittest.TestCase):

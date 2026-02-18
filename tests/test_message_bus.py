@@ -7,13 +7,7 @@ from EvoScientist.channels.bus.events import InboundMessage, OutboundMessage
 from EvoScientist.channels.bus.message_bus import MessageBus
 
 
-def _run(coro):
-    """Run an async coroutine safely, creating a fresh event loop."""
-    loop = asyncio.new_event_loop()
-    try:
-        return loop.run_until_complete(coro)
-    finally:
-        loop.close()
+from tests.conftest import run_async as _run
 
 
 # ── Event tests ──
