@@ -865,7 +865,7 @@ class Channel(ChannelPlugin, ABC):
 
         Convenience method for subclass ``_on_message`` handlers.
         """
-        msg = self._build_inbound(raw)
+        msg = await self._build_inbound_async(raw)
         if msg is None:
             return
         if raw.message_id:

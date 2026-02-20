@@ -81,7 +81,7 @@ class EmailChannel(Channel, PollingMixin):
         cfg = self.config
         if not cfg.imap_host or not cfg.imap_username:
             raise ChannelError("Email imap_host and imap_username are required")
-        loop = asyncio.get_event_loop()
+        loop = asyncio.get_running_loop()
         await loop.run_in_executor(None, self._connect_imap)
         self._running = True
         logger.info(f"Email channel started (IMAP: {cfg.imap_host}, poll {cfg.poll_interval}s)")
@@ -120,7 +120,7 @@ class EmailChannel(Channel, PollingMixin):
         self._connect_imap()
 
     async def _poll_once(self) -> None:
-        loop = asyncio.get_event_loop()
+        loop = asyncio.get_running_loop()
         messages = await loop.run_in_executor(None, self._fetch_unseen)
         for m in messages:
             await self._process_email(m)
@@ -270,7 +270,7 @@ class EmailChannel(Channel, PollingMixin):
                         pass
 
     async def _send_chunk(self, chat_id, formatted_text, raw_text, reply_to, metadata):
-        loop = asyncio.get_event_loop()
+        loop = asyncio.get_running_loop()
         try:
             await loop.run_in_executor(
                 None, self._smtp_send_html, chat_id, formatted_text, raw_text, metadata or {},
@@ -339,7 +339,7 @@ class EmailChannel(Channel, PollingMixin):
         metadata: dict | None = None,
     ) -> bool:
         """Send a file as an email attachment via SMTP."""
-        loop = asyncio.get_event_loop()
+        loop = asyncio.get_running_loop()
         await loop.run_in_executor(
             None, self._smtp_send_attachment, recipient, file_path, caption, metadata or {},
         )

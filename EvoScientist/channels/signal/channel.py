@@ -45,6 +45,7 @@ class SignalChannel(Channel):
         # Cache message_id → sender for reaction targetAuthor (bounded)
         self._msg_senders: dict[str, str] = {}
         self._msg_senders_order: deque = deque(maxlen=200)
+        self._listen_task: asyncio.Task | None = None
 
     async def start(self) -> None:
         if not self.config.phone_number:
@@ -69,7 +70,7 @@ class SignalChannel(Channel):
         self._listen_task = asyncio.create_task(self._listen_loop())
 
     async def _cleanup(self) -> None:
-        if hasattr(self, "_listen_task") and self._listen_task:
+        if self._listen_task:
             self._listen_task.cancel()
             self._listen_task = None
         # Cancel any pending RPC futures
@@ -180,7 +181,8 @@ class SignalChannel(Channel):
                     try:
                         await self._connect()
                     except Exception:
-                        pass
+                        logger.warning("Signal reconnect failed, exiting listen loop")
+                        break
 
     async def _handle_rpc(self, data: dict) -> None:
         """Handle a JSON RPC message from signal-cli."""
