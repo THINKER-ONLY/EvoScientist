@@ -9,6 +9,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import queue
+import random
 import shlex
 from typing import Any, Callable
 
@@ -40,7 +41,7 @@ from ..sessions import (
 from ..stream.events import stream_agent_events
 from ..stream.state import StreamState, _INTERNAL_TOOLS
 
-from ._constants import LOGO_LINES, LOGO_GRADIENT, build_metadata
+from ._constants import LOGO_LINES, LOGO_GRADIENT, WELCOME_SLOGANS, build_metadata
 
 _channel_logger = logging.getLogger(__name__)
 
@@ -111,6 +112,8 @@ def _build_welcome_banner(
     info.append(" for commands", style="#ffe082")
     banner.append_text(info)
 
+    slogan = Text(f"\n  {random.choice(WELCOME_SLOGANS)}", style="dim italic")
+
     # Channels panel
     if channels:
         from rich.panel import Panel
@@ -132,8 +135,10 @@ def _build_welcome_banner(
         body = Text("\n").join(lines)
         border = "green" if all_ok else "dim"
         panel = Panel(body, title="[bold]Channels[/bold]", border_style=border, expand=False)
-        return Group(banner, Text(""), panel)
+        return Group(banner, Text(""), panel, slogan)
 
+    # No channels — append slogan directly to banner
+    banner.append_text(slogan)
     return banner
 
 
@@ -375,16 +380,22 @@ def run_textual_interactive(
             on_thinking_cb: Callable[[str], None] | None = None,
             on_todo_cb: Callable[[list[dict]], None] | None = None,
             on_media_cb: Callable[[str], None] | None = None,
+            skip_user_message: bool = False,
         ) -> str:
             """Stream agent events and mount widgets.  Returns response text.
 
             Shared by ``_run_turn`` (interactive) and
             ``_process_channel_message`` (channel).
+
+            Args:
+                skip_user_message: If True, don't mount UserMessage (caller
+                    already mounted it — e.g. channel messages with labels).
             """
             container = self.query_one("#chat", VerticalScroll)
 
             # 1. Mount user message + loading spinner
-            await container.mount(UserMessage(user_text))
+            if not skip_user_message:
+                await container.mount(UserMessage(user_text))
             loading = LoadingWidget()
             await container.mount(loading)
             container.scroll_end(animate=False)
@@ -841,17 +852,28 @@ def run_textual_interactive(
                 prompt.focus()
 
         async def _process_channel_message(self, msg: ChannelMessage) -> None:
-            """Process a channel message: stream agent response and reply."""
+            """Process a channel message: stream agent response and reply.
+
+            Display order (matches Rich CLI):
+              > message content
+              [channel: Received from sender]
+              (streaming response)
+              [channel: Replied to sender]
+            """
             self._busy = True
             self._render_status()
 
             prompt_widget = self.query_one("#prompt", Input)
             prompt_widget.disabled = True
 
+            # Mount user message first, then "Received" label
+            container = self.query_one("#chat", VerticalScroll)
+            await container.mount(UserMessage(msg.content))
             self._append_system(
                 f"[{msg.channel_type}: Received from {msg.sender}]",
                 style="dim",
             )
+            container.scroll_end(animate=False)
 
             # Build channel callbacks (fire-and-forget to avoid blocking UI)
             def _send_to_channel(coro, label: str) -> None:
@@ -908,6 +930,7 @@ def run_textual_interactive(
                     on_thinking_cb=_send_thinking if self._channel_send_thinking else None,
                     on_todo_cb=_send_todo,
                     on_media_cb=_send_media,
+                    skip_user_message=True,
                 )
             except Exception as exc:
                 response = f"Error: {exc}"

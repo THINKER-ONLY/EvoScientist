@@ -87,8 +87,6 @@ def print_banner(
     info.append("/", style="#ffe082 bold")
     info.append(" for commands", style="#ffe082")
     console.print(info)
-    console.print(Text(f"  {random.choice(WELCOME_SLOGANS)}", style="dim italic"))
-    console.print()
 
 
 # =============================================================================
@@ -570,6 +568,10 @@ def cmd_interactive(
                     config,
                     send_thinking=channel_send_thinking,
                 )
+
+            # Slogan — after channels, right before user input
+            console.print(Text(f"  {random.choice(WELCOME_SLOGANS)}", style="dim italic"))
+            console.print()
 
             try:
                 _print_separator()
