@@ -52,7 +52,7 @@ Going beyond traditional human-in-the-loop systems, EvoScientist introduces an A
 - **🧠 Persistent Memory** — Context, preferences, and findings survive across sessions.
 - **🔬 Scientific Workflow** — Intake → plan → execute → evaluate → write → verify.
 - **🌐 Multi-Provider** — Anthropic, OpenAI, Google, NVIDIA — one config to switch.
-- **📱 Multi-Channel** — CLI as the hub; Telegram, Discord, Slack, Feishu, WeChat, and more feed into one agent session.
+- **📱 Multi-Channel** — CLI as the hub; Telegram, Discord, Slack, Feishu, WeChat, and more — one agent session.
 - **🔌 MCP & Skills** — Plug in MCP servers or install skills from GitHub on the fly.
 
 ## 🔥 News
@@ -66,7 +66,7 @@ Going beyond traditional human-in-the-loop systems, EvoScientist introduces an A
 - [🔌 MCP Integration](#-mcp-integration)
 - [📱 Channels](#-channels)
 - [📚 Acknowledgments](#-acknowledgments)
-- [⚗️ EvoScientist Team](#-evoscientist-team)
+- [🧪 EvoScientist Team](#-evoscientist-team)
 - [🤝 Contributing](#-contributing)
 
 ## 📦 Installation
@@ -269,7 +269,7 @@ We thank the authors for their valuable contributions to the open-source communi
 
 <p align="right"><a href="#top">🔝Back to top</a></p>
 
-## ⚗️ EvoScientist Team
+## 🛠️ EvoScientist Team
 
 <table>
   <tbody>
