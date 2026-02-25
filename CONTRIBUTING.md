@@ -49,7 +49,7 @@ Requirements:
 Install project with development dependencies:
 
 ```bash
-python -m pip install -e ".[dev]"
+uv sync --dev
 ```
 
 Run the CLI locally:
@@ -85,7 +85,7 @@ Tests live in `tests/` and follow `test_*.py` naming.
 Run lint before opening a PR:
 
 ```bash
-ruff check .
+uv run ruff check .
 ```
 
 ## Testing
@@ -93,7 +93,7 @@ ruff check .
 Run all tests:
 
 ```bash
-pytest -v
+uv run pytest -v
 ```
 
 Guidelines:
@@ -115,7 +115,7 @@ Please include:
 - Why this is the minimal solution (`less is more`)
 - How compatibility is preserved across existing settings/workflows
 - Linked issue(s), if applicable
-- Validation evidence (output summary of `ruff check .` and `pytest -v`)
+- Validation evidence (output summary of `uv run ruff check .` and `uv run pytest -v`)
 - Screenshots or terminal snippets for user-facing behavior changes, when applicable
 
 Before requesting review, ensure:

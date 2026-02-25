@@ -58,6 +58,30 @@ class TestFormatRelativeTime(unittest.TestCase):
         result = _format_relative_time(now)
         self.assertIn("just now", result)
 
+    def test_minutes(self):
+        from datetime import datetime, timedelta, timezone
+        ts = (datetime.now(timezone.utc) - timedelta(minutes=5)).isoformat()
+        result = _format_relative_time(ts)
+        self.assertIn("min ago", result)
+
+    def test_hours(self):
+        from datetime import datetime, timedelta, timezone
+        ts = (datetime.now(timezone.utc) - timedelta(hours=2)).isoformat()
+        result = _format_relative_time(ts)
+        self.assertIn("hour", result)
+
+    def test_days(self):
+        from datetime import datetime, timedelta, timezone
+        ts = (datetime.now(timezone.utc) - timedelta(days=3)).isoformat()
+        result = _format_relative_time(ts)
+        self.assertIn("day", result)
+
+    def test_months(self):
+        from datetime import datetime, timedelta, timezone
+        ts = (datetime.now(timezone.utc) - timedelta(days=65)).isoformat()
+        result = _format_relative_time(ts)
+        self.assertIn("month", result)
+
 
 class TestThreadFunctions(unittest.TestCase):
     """Tests using a real temporary SQLite database."""
