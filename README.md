@@ -81,17 +81,25 @@ Going beyond traditional human-in-the-loop systems, EvoScientist introduces an A
 
 ## 📦 Installation
 
-> [!NOTE]
-> Requires **Python 3.11+**. A virtual environment is strongly recommended — EvoScientist experiments may install ML libraries (PyTorch, transformers, etc.) that can conflict with your system packages. We recommend [**uv**](https://docs.astral.sh/uv/) for fast, reliable dependency management — it handles Python versions, virtual environments, and packages in a single tool.
+> [!TIP]
+> Requires **Python 3.11+**. We recommend [**uv**](https://docs.astral.sh/uv/) or **conda** for dependency management and virtual environments.
 
-### Install uv (if you don't have it)
+<details>
+<summary> 🪛 Install uv (if you don't have it)</summary>
 
 ```bash
-# Always review scripts before piping to shell: https://astral.sh/uv/install.sh
 curl -LsSf https://astral.sh/uv/install.sh | sh
 ```
 
+</details>
+
 ### Quick Install
+
+```bash
+uv tool install EvoScientist
+```
+
+Or install into the current environment instead:
 
 ```bash
 uv pip install EvoScientist
@@ -106,7 +114,7 @@ uv sync --dev
 ```
 
 <details>
-<summary>Using conda</summary>
+<summary> Using conda</summary>
 
 ```bash
 conda create -n EvoSci python=3.11 -y
@@ -117,7 +125,7 @@ pip install -e ".[dev]"
 </details>
 
 <details>
-<summary>Using pip</summary>
+<summary> Using PyPi</summary>
 
 ```bash
 pip install EvoScientist          # quick install
@@ -127,16 +135,7 @@ pip install -e ".[dev]"           # development install
 </details>
 
 <details>
-<summary>Upgrade to latest</summary>
-
-```bash
-git pull && uv sync --dev
-```
-
-</details>
-
-<details>
-<summary>Optional: Channel dependencies</summary>
+<summary> Optional: Channel dependencies</summary>
 
 Messaging channel integrations require extra dependencies. Install only what you need:
 
@@ -147,6 +146,15 @@ uv pip install "EvoScientist[slack]"        # Slack
 uv pip install "EvoScientist[wechat]"       # WeChat
 uv pip install "EvoScientist[qq]"           # QQ
 uv pip install "EvoScientist[all-channels]" # everything
+```
+
+</details>
+
+<details>
+<summary> Upgrade to the latest code base </summary>
+
+```bash
+git pull && uv sync --dev
 ```
 
 </details>
@@ -164,7 +172,7 @@ EvoSci onboard
 It walks you through provider selection, key validation, model choice, and workspace setup.
 
 <details>
-<summary>Manual configuration via environment variables</summary>
+<summary> 📟 Manual configuration via environment variables </summary>
 
 Set at least one LLM provider key and (optionally) a search key:
 
@@ -187,8 +195,7 @@ Alternatively, copy the example `.env` file for project-level configuration:
 cp .env.example .env  # then fill in your keys
 ```
 
-> [!WARNING]
-> Never commit `.env` files with real keys. It is already in `.gitignore`.
+> ⚠️ Never commit `.env` files with real keys. It is already in `.gitignore`.
 
 </details>
 
@@ -271,7 +278,7 @@ EvoSci mcp add <name> <command> [-- args...]
 EvoSci mcp add sequential-thinking npx -- -y @modelcontextprotocol/server-sequential-thinking
 ```
 
-> [!NOTE]
+> [!TIP]
 > For command options, config fields, tool routing, wildcard filtering, and troubleshooting, see the **[MCP Integration Guide](https://github.com/EvoScientist/EvoScientist/tree/main/EvoScientist/mcp#model-context-protocol-integration)**.
 
 <p align="right"><a href="#top">🔝Back to top</a></p>
@@ -296,7 +303,7 @@ channel_enabled: "telegram,discord,slack"
 
 The channel can also be started interactively with `/channel` in the CLI session.
 
-> [!NOTE]
+> [!TIP]
 > For per-channel setup guides, capability matrix, architecture details, and troubleshooting, see the **[Channel Integration Guide](https://github.com/EvoScientist/EvoScientist/tree/main/EvoScientist/channels#channels)**.
 
 <p align="right"><a href="#top">🔝Back to top</a></p>
