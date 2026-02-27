@@ -75,8 +75,6 @@ class TestEvoScientistConfig:
         assert config.model == "claude-sonnet-4-5"
         assert config.default_mode == "daemon"
         assert config.default_workdir == ""
-        assert config.max_concurrent == 3
-        assert config.max_iterations == 3
         assert config.show_thinking is True
         assert config.ui_backend == "rich"
         assert config.ollama_base_url == ""
@@ -90,14 +88,12 @@ class TestEvoScientistConfig:
             provider="openai",
             model="gpt-4o",
             default_mode="run",
-            max_concurrent=5,
         )
 
         assert config.anthropic_api_key == "sk-ant-test"
         assert config.provider == "openai"
         assert config.model == "gpt-4o"
         assert config.default_mode == "run"
-        assert config.max_concurrent == 5
 
 
 # =============================================================================
@@ -154,14 +150,12 @@ class TestLoadSaveReset:
         original = EvoScientistConfig(
             anthropic_api_key="test-key",
             provider="openai",
-            max_concurrent=7,
         )
         save_config(original)
 
         loaded = load_config()
         assert loaded.anthropic_api_key == "test-key"
         assert loaded.provider == "openai"
-        assert loaded.max_concurrent == 7
 
     def test_reset_deletes_config_file(self, temp_config_dir, clean_env):
         """Test that reset deletes the config file."""
@@ -240,13 +234,6 @@ class TestGetSetValues:
         set_config_value("show_thinking", "yes")
         assert get_config_value("show_thinking") is True
 
-    def test_set_config_value_type_coercion_int(self, temp_config_dir, clean_env):
-        """Test that integer values are coerced correctly."""
-        save_config(EvoScientistConfig())
-
-        set_config_value("max_concurrent", "5")
-        assert get_config_value("max_concurrent") == 5
-
     def test_set_imessage_enabled_coercion(self, temp_config_dir, clean_env):
         """Test that imessage_enabled is coerced from string to bool."""
         save_config(EvoScientistConfig())
@@ -299,11 +286,10 @@ class TestPriorityChain:
 
     def test_file_overrides_defaults(self, temp_config_dir, clean_env):
         """Test file config overrides defaults."""
-        save_config(EvoScientistConfig(provider="openai", max_concurrent=7))
+        save_config(EvoScientistConfig(provider="openai"))
 
         config = get_effective_config()
         assert config.provider == "openai"
-        assert config.max_concurrent == 7
 
     def test_env_overrides_file(self, temp_config_dir, monkeypatch):
         """Test environment variables override file config."""

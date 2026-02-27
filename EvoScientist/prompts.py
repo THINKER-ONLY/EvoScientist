@@ -172,6 +172,12 @@ This prevents blocking the conversation during long operations.
 
 DELEGATION_STRATEGY = """# Sub-Agent Delegation
 
+## Mindset
+Treat every experiment as a submission draft. Each claim requires sufficient
+evidence: reproducible numbers, controlled comparisons, and identified failure
+modes. Iterate until a critical reviewer would accept the results — not for a
+fixed number of rounds.
+
 ## Default: Use 1 Sub-Agent
 For most tasks, a single sub-agent is sufficient:
 - "Plan experimental stages" → planner-agent
@@ -187,24 +193,42 @@ For most tasks, a single sub-agent is sufficient:
 - Provide concrete file paths, commands, and success signals in each task
   so the sub-agent can respond precisely
 
-## Parallelize Only When Necessary
-Use multiple sub-agents ONLY for:
+## When to Parallelize
+Launch multiple sub-agents only when experiments are independent:
 
-**Explicit comparisons** (1 per method/baseline):
-- "Compare A vs B vs C" → 3 parallel sub-agents
+**Parallel** (no dependency between results):
+- Comparing Method A vs B vs C on the same data → one agent per method
+- Running the same method on Dataset X, Y, Z → one agent per dataset
+- Literature search while implementing a baseline → two agents
 
-**Distinct experiments** with separate datasets or setups:
-- "Run baselines on X and Y" → 2 parallel sub-agents
+**Sequential** (each step depends on the previous):
+- Hyperparameter tuning — each round uses the previous result
+- Debug → fix → re-run — must observe the outcome before proceeding
+- Ablation design — requires knowing which components matter first
 
-## Limits
-- Maximum {max_concurrent} parallel sub-agents per round
-- Maximum {max_iterations} delegation rounds total
-- Stop when evidence is sufficient
+## When to Stop Iterating
+After each stage, ask: "Would a critical reviewer accept this evidence?"
+
+**Stop** when ALL of the following hold:
+- A baseline is established and documented
+- The primary metric is consistent across runs (≥3 seeds or folds, with
+  confidence intervals or error bars)
+- Ablations confirm each key component's contribution
+- Results are compared against relevant baselines from the literature
+- Failure cases and limitations are identified and documented
+- All success signals defined in the plan are satisfied
+
+**Keep iterating** if ANY of the following is true:
+- Results vary widely across runs (high variance, no uncertainty estimate)
+- A necessary comparison or ablation is missing
+- The method fails on straightforward cases without explanation
+- A reviewer would reasonably ask "did you try X?" and X is feasible
 
 ## Key Principles
-- Bias towards a single sub-agent (token-efficient)
-- Avoid premature decomposition
-- Each sub-agent returns focused, self-contained findings
+- Bias towards a single sub-agent — add concurrency only when the workload
+  is genuinely independent
+- Avoid premature decomposition — one focused task per sub-agent
+- Each sub-agent returns self-contained findings with concrete artifacts
 """
 
 # =============================================================================
@@ -264,18 +288,10 @@ Finding one with context [1]. Another insight [2].
 # Combined exports
 # =============================================================================
 
-def get_system_prompt(max_concurrent: int = 3, max_iterations: int = 3) -> str:
-    """Generate the complete system prompt with configured limits.
-
-    Args:
-        max_concurrent: Maximum number of concurrent sub-agents.
-        max_iterations: Maximum number of delegation rounds.
+def get_system_prompt() -> str:
+    """Generate the complete system prompt.
 
     Returns:
         Combined system prompt string.
     """
-    delegation = DELEGATION_STRATEGY.format(
-        max_concurrent=max_concurrent,
-        max_iterations=max_iterations,
-    )
-    return EXPERIMENT_WORKFLOW + "\n" + delegation
+    return EXPERIMENT_WORKFLOW + "\n" + DELEGATION_STRATEGY

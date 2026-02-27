@@ -88,11 +88,7 @@ def _ensure_system_prompt():
     """Return cached system prompt, creating it on first call."""
     global _system_prompt
     if _system_prompt is None:
-        cfg = _ensure_config()
-        _system_prompt = get_system_prompt(
-            max_concurrent=cfg.max_concurrent,
-            max_iterations=cfg.max_iterations,
-        )
+        _system_prompt = get_system_prompt()
     return _system_prompt
 
 

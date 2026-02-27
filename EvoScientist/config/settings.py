@@ -53,8 +53,6 @@ class EvoScientistConfig:
         model: Default model name (short name or full ID).
         default_mode: Default workspace mode ('daemon' or 'run').
         default_workdir: Default workspace directory (empty = use current working directory).
-        max_concurrent: Maximum concurrent sub-agents.
-        max_iterations: Maximum delegation iterations.
         show_thinking: Whether to show thinking panels in CLI.
     """
 
@@ -77,10 +75,6 @@ class EvoScientistConfig:
     # Workspace Settings
     default_mode: Literal["daemon", "run"] = "daemon"
     default_workdir: str = ""
-
-    # Agent Parameters
-    max_concurrent: int = 3
-    max_iterations: int = 3
 
     # UI Settings
     show_thinking: bool = True

@@ -17,19 +17,14 @@ class TestGetSystemPrompt:
         result = get_system_prompt()
         assert "Sub-Agent Delegation" in result
 
-    def test_default_params_interpolated(self):
+    def test_no_numeric_limits(self):
         result = get_system_prompt()
-        assert "3 parallel sub-agents" in result
-        assert "3 delegation rounds" in result
-
-    def test_custom_params(self):
-        result = get_system_prompt(max_concurrent=5, max_iterations=10)
-        assert "5 parallel sub-agents" in result
-        assert "10 delegation rounds" in result
+        assert "{max_concurrent}" not in result
+        assert "{max_iterations}" not in result
 
     def test_workflow_constant_not_empty(self):
         assert len(EXPERIMENT_WORKFLOW) > 0
 
-    def test_delegation_has_placeholders(self):
-        assert "{max_concurrent}" in DELEGATION_STRATEGY
-        assert "{max_iterations}" in DELEGATION_STRATEGY
+    def test_delegation_no_placeholders(self):
+        assert "{max_concurrent}" not in DELEGATION_STRATEGY
+        assert "{max_iterations}" not in DELEGATION_STRATEGY

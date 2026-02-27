@@ -90,7 +90,7 @@ def _checkbox_ask(choices, message: str, **kwargs):
     finally:
         InquirerControl._get_choice_tokens = original
 
-STEPS = ["UI", "Provider", "API Key", "Model", "Tavily Key", "Workspace", "Parameters", "Skills", "MCP Servers", "Channels"]
+STEPS = ["UI", "Provider", "API Key", "Model", "Tavily Key", "Workspace", "Thinking", "Skills", "MCP Servers", "Channels"]
 
 
 # =============================================================================
@@ -804,44 +804,15 @@ def _step_workspace(config: EvoScientistConfig) -> tuple[str, str]:
     return mode, workdir
 
 
-def _step_parameters(config: EvoScientistConfig) -> tuple[int, int, bool]:
-    """Step 6: Configure agent parameters.
+def _step_thinking(config: EvoScientistConfig) -> bool:
+    """Step 6: Configure thinking panel visibility.
 
     Args:
         config: Current configuration.
 
     Returns:
-        Tuple of (max_concurrent, max_iterations, show_thinking).
+        Whether to show thinking panels in CLI.
     """
-    # Max concurrent
-    max_concurrent_str = questionary.text(
-        "Max concurrent sub-agents (1-10):",
-        default=str(config.max_concurrent),
-        style=WIZARD_STYLE,
-        qmark=QMARK,
-        validate=lambda x: x.strip() == "" or (x.strip().isdigit() and 1 <= int(x.strip()) <= 10),
-    ).ask()
-
-    if max_concurrent_str is None:
-        raise KeyboardInterrupt()
-
-    max_concurrent = int(max_concurrent_str.strip()) if max_concurrent_str.strip() else config.max_concurrent
-
-    # Max iterations
-    max_iterations_str = questionary.text(
-        "Max delegation iterations (1-10):",
-        default=str(config.max_iterations),
-        style=WIZARD_STYLE,
-        qmark=QMARK,
-        validate=lambda x: x.strip() == "" or (x.strip().isdigit() and 1 <= int(x.strip()) <= 10),
-    ).ask()
-
-    if max_iterations_str is None:
-        raise KeyboardInterrupt()
-
-    max_iterations = int(max_iterations_str.strip()) if max_iterations_str.strip() else config.max_iterations
-
-    # Show thinking
     thinking_choices = [
         Choice(title="On (show model reasoning)", value=True),
         Choice(title="Off (hide model reasoning)", value=False),
@@ -859,7 +830,7 @@ def _step_parameters(config: EvoScientistConfig) -> tuple[int, int, bool]:
     if show_thinking is None:
         raise KeyboardInterrupt()
 
-    return max_concurrent, max_iterations, show_thinking
+    return show_thinking
 
 
 _RECOMMENDED_SKILLS = [
@@ -1828,10 +1799,8 @@ def run_onboard(skip_validation: bool = False) -> bool:
         config.default_mode = mode
         config.default_workdir = workdir
 
-        # Step 6: Parameters
-        max_concurrent, max_iterations, show_thinking = _step_parameters(config)
-        config.max_concurrent = max_concurrent
-        config.max_iterations = max_iterations
+        # Step 6: Thinking
+        show_thinking = _step_thinking(config)
         config.show_thinking = show_thinking
 
         # Step 7: Skills

@@ -25,7 +25,7 @@ class TestConstants:
     def test_steps_has_ten_items(self):
         """Test that STEPS contains exactly 10 steps."""
         assert len(STEPS) == 10
-        assert STEPS == ["UI", "Provider", "API Key", "Model", "Tavily Key", "Workspace", "Parameters", "Skills", "MCP Servers", "Channels"]
+        assert STEPS == ["UI", "Provider", "API Key", "Model", "Tavily Key", "Workspace", "Thinking", "Skills", "MCP Servers", "Channels"]
 
     def test_wizard_style_is_style_instance(self):
         """Test that WIZARD_STYLE is a prompt_toolkit Style."""
@@ -702,32 +702,30 @@ class TestStepMcpServersNpxFailure:
         mock_add.assert_not_called()
 
 
-class TestStepParameters:
-    def test_returns_parameters(self):
-        """Test parameters step returns all values."""
-        from EvoScientist.config.onboard import _step_parameters
+class TestStepThinking:
+    def test_returns_show_thinking(self):
+        """Test thinking step returns selected value."""
+        from EvoScientist.config.onboard import _step_thinking
 
         config = EvoScientistConfig()
 
         with patch("EvoScientist.config.onboard.questionary") as mock_q:
-            mock_q.text.return_value.ask.side_effect = ["5", "3"]
-            mock_q.select.return_value.ask.return_value = True  # show_thinking
-            result = _step_parameters(config)
+            mock_q.select.return_value.ask.return_value = True
+            result = _step_thinking(config)
 
-        assert result == (5, 3, True)
+        assert result is True
 
-    def test_uses_defaults_on_empty_input(self):
-        """Test that empty input uses defaults."""
-        from EvoScientist.config.onboard import _step_parameters
+    def test_returns_false_when_off(self):
+        """Test thinking step returns False when user selects Off."""
+        from EvoScientist.config.onboard import _step_thinking
 
-        config = EvoScientistConfig(max_concurrent=2, max_iterations=4, show_thinking=False)
+        config = EvoScientistConfig(show_thinking=False)
 
         with patch("EvoScientist.config.onboard.questionary") as mock_q:
-            mock_q.text.return_value.ask.side_effect = ["", ""]  # Empty inputs
-            mock_q.select.return_value.ask.return_value = False  # show_thinking
-            result = _step_parameters(config)
+            mock_q.select.return_value.ask.return_value = False
+            result = _step_thinking(config)
 
-        assert result == (2, 4, False)
+        assert result is False
 
 
 # =============================================================================
@@ -765,8 +763,6 @@ class TestRunOnboard:
             ]
             mock_q.text.return_value.ask.side_effect = [
                 "",  # Workspace directory (empty = use cwd)
-                "3",  # Max concurrent
-                "3",  # Max iterations
             ]
             mock_q.checkbox.return_value.ask.return_value = []  # Skills: skip
 
@@ -815,8 +811,6 @@ class TestRunOnboard:
             ]
             mock_q.text.return_value.ask.side_effect = [
                 "",  # Workspace directory (empty = use cwd)
-                "3",  # Max concurrent
-                "3",  # Max iterations
             ]
             mock_q.checkbox.return_value.ask.return_value = []  # Skills: skip
 
