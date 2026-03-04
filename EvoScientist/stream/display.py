@@ -14,7 +14,6 @@ from rich.console import Console, Group  # type: ignore[import-untyped]
 from rich.live import Live  # type: ignore[import-untyped]
 from rich.markdown import Markdown  # type: ignore[import-untyped]
 from rich.panel import Panel  # type: ignore[import-untyped]
-from rich.spinner import Spinner  # type: ignore[import-untyped]
 from rich.text import Text  # type: ignore[import-untyped]
 
 from ..paths import resolve_virtual_path
@@ -340,8 +339,7 @@ def create_streaming_display(
 
     # Initial waiting state
     if is_waiting and not thinking_text and not response_text and not tool_calls:
-        spinner = Spinner("dots", text=" Thinking...", style="cyan")
-        elements.append(spinner)
+        elements.append(Text("Thinking...", style="cyan"))
         return Group(*elements)
 
     # Thinking panel
@@ -422,8 +420,7 @@ def create_streaming_display(
 
         for tc, tr in running_regular:
             elements.append(_render_tool_call_line(tc, tr))
-            spinner = Spinner("dots", text=" Running...", style="yellow")
-            elements.append(spinner)
+            elements.append(Text(" Running...", style="yellow"))
 
         # Task tool calls are rendered as part of sub-agent sections below
 
@@ -469,8 +466,7 @@ def create_streaming_display(
         # Check if any sub-agent is active
         any_active = any(sa.is_active for sa in subagents)
         if not any_active:
-            spinner = Spinner("dots", text=" Analyzing results...", style="cyan")
-            elements.append(spinner)
+            elements.append(Text(" Analyzing results...", style="cyan"))
 
     # Final response -- render as streaming Markdown whenever all tools are done.
     # The Live display is transient; display_final_results() re-renders the
@@ -639,6 +635,9 @@ def _run_streaming(
 
     async def _consume() -> None:
         nonlocal _thinking_sent, _todo_sent
+        # Manual refresh pacing: max 10Hz (every 100ms)
+        refresh_interval = 0.1
+        last_refresh = 0.0
         async for event in stream_agent_events(agent, message, thread_id, metadata=metadata):
             event_type = state.handle_event(event)
 
@@ -710,14 +709,12 @@ def _run_streaming(
                 **state.get_display_args(),
                 show_thinking=show_thinking,
             ))
-            if event_type in (
-                "tool_call", "tool_result",
-                "subagent_start", "subagent_tool_call",
-                "subagent_tool_result", "subagent_end",
-            ):
+            now = loop.time()
+            if now - last_refresh >= refresh_interval:
                 live.refresh()
+                last_refresh = now
 
-    with Live(console=console, refresh_per_second=10, transient=True) as live:
+    with Live(console=console, auto_refresh=False, transient=True) as live:
         live.update(create_streaming_display(is_waiting=True))
         try:
             loop = _get_event_loop()
@@ -725,6 +722,7 @@ def _run_streaming(
             # No current event loop
             loop = _create_event_loop()
         loop.run_until_complete(_consume())
+        live.refresh()
 
     # Flush any remaining thinking that wasn't sent during streaming
     if on_thinking and not _thinking_sent and state.thinking_text:
