@@ -14,6 +14,10 @@ import fnmatch
 import sys
 import zipfile
 from pathlib import Path
+
+# Ensure skill-creator root is on sys.path for `from scripts.xxx` imports
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
 from scripts.quick_validate import validate_skill
 
 # Patterns to exclude when packaging skills.

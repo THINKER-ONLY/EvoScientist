@@ -276,7 +276,7 @@ Once all runs are done:
    ```
    For iteration 2+, also pass `--previous-workspace <workspace>/iteration-<N-1>`.
 
-   **Headless environments:** Use `--static <output_path>` to write a standalone HTML file instead of starting a server.
+   **Headless environments:** Use `--static <output_path>` to write a single-file HTML instead of starting a server. Note: the file still loads Google Fonts and SheetJS from CDN, so an internet connection is needed for full rendering.
 
 5. **Tell the user** the results are ready in their browser.
 

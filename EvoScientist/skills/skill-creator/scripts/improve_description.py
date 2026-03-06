@@ -11,6 +11,9 @@ import re
 import sys
 from pathlib import Path
 
+# Ensure skill-creator root is on sys.path for `from scripts.xxx` imports
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
 from langchain_core.messages import HumanMessage
 
 from EvoScientist.config import apply_config_to_env, get_effective_config

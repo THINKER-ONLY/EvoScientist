@@ -15,6 +15,9 @@ import time
 import webbrowser
 from pathlib import Path
 
+# Ensure skill-creator root is on sys.path for `from scripts.xxx` imports
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
 from EvoScientist.config import get_effective_config, apply_config_to_env
 
 from scripts.generate_report import generate_html

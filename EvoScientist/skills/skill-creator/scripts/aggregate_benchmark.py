@@ -268,7 +268,10 @@ def generate_benchmark(benchmark_dir: Path, skill_name: str = "", skill_path: st
             "analyzer_model": "<model-name>",
             "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
             "evals_run": eval_ids,
-            "runs_per_configuration": 3
+            "runs_per_configuration": min(
+                (len(runs) for runs in results.values() if runs),
+                default=0,
+            )
         },
         "runs": runs,
         "run_summary": run_summary,

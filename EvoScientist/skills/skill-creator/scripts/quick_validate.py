@@ -8,8 +8,8 @@ import re
 import yaml
 from pathlib import Path
 
-def validate_skill(skill_path):
-    """Basic validation of a skill"""
+def validate_skill(skill_path, *, strict=False):
+    """Basic validation of a skill. With strict=True, also checks for TODO placeholders."""
     skill_path = Path(skill_path)
 
     # Check SKILL.md exists
@@ -90,13 +90,30 @@ def validate_skill(skill_path):
         if len(compatibility) > 500:
             return False, f"Compatibility is too long ({len(compatibility)} characters). Maximum is 500 characters."
 
+    # Strict mode: check for incomplete/placeholder content
+    if strict:
+        TODO_PATTERN = re.compile(r'\[TODO:|\bTODO\b')
+
+        # Check description is not a placeholder
+        if description and TODO_PATTERN.search(description):
+            return False, "Description contains TODO placeholder (strict mode)"
+
+        # Check body for TODO markers
+        body = content[match.end():]
+        todo_matches = TODO_PATTERN.findall(body)
+        if todo_matches:
+            return False, f"SKILL.md body contains {len(todo_matches)} TODO placeholder(s) (strict mode)"
+
     return True, "Skill is valid!"
 
 if __name__ == "__main__":
-    if len(sys.argv) != 2:
-        print("Usage: python quick_validate.py <skill_directory>")
-        sys.exit(1)
-    
-    valid, message = validate_skill(sys.argv[1])
+    import argparse as _ap
+    _parser = _ap.ArgumentParser(description="Validate a skill directory")
+    _parser.add_argument("skill_directory", help="Path to skill directory")
+    _parser.add_argument("--strict", action="store_true",
+                         help="Also check for TODO placeholders and incomplete content")
+    _args = _parser.parse_args()
+
+    valid, message = validate_skill(_args.skill_directory, strict=_args.strict)
     print(message)
     sys.exit(0 if valid else 1)
