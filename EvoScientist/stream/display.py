@@ -22,6 +22,7 @@ from ..paths import resolve_virtual_path
 from .formatter import ToolResultFormatter
 from .state import StreamState, SubAgentState, _build_todo_stats, _parse_todo_items, _INTERNAL_TOOLS
 from .utils import DisplayLimits, ToolStatus, format_tool_compact, is_success
+from .diff_format import build_edit_diff
 from .events import stream_agent_events
 
 # ---------------------------------------------------------------------------
@@ -76,16 +77,33 @@ def _format_single_todo(item: dict) -> Text:
 # Tool result formatting
 # ---------------------------------------------------------------------------
 
-def format_tool_result_compact(_name: str, content: str, max_lines: int = 5) -> list:
+def format_tool_result_compact(
+    _name: str,
+    content: str,
+    max_lines: int = 5,
+    tool_args: dict | None = None,
+) -> list:
     """Format tool result as tree output.
 
     Special handling for write_todos: shows formatted checklist with status symbols.
+    Special handling for edit_file: shows color-coded unified diff.
     """
     elements = []
 
     if not content.strip():
         elements.append(Text("  \u2514 (empty)", style="dim"))
         return elements
+
+    # Special handling for edit_file: show diff
+    if _name == "edit_file" and tool_args and is_success(content):
+        old_str = tool_args.get("old_string", "")
+        new_str = tool_args.get("new_string", "")
+        path = tool_args.get("path", tool_args.get("file_path", ""))
+        if old_str and new_str and old_str != new_str:
+            diff_markup = build_edit_diff(path, old_str, new_str)
+            if diff_markup:
+                elements.append(Text.from_markup(diff_markup))
+                return elements
 
     # Special handling for write_todos
     if _name == "write_todos":
@@ -431,9 +449,10 @@ def create_streaming_display(
             for tc, tr in completed_regular:
                 elements.append(_render_tool_call_line(tc, tr))
                 content = tr.get('content', '') if tr else ''
-                if tr and not is_success(content):
+                if tr and (not is_success(content) or tc.get('name') == 'edit_file'):
                     result_elements = format_tool_result_compact(
                         tr['name'], content, max_lines=10,
+                        tool_args=tc.get('args'),
                     )
                     elements.extend(result_elements)
 
@@ -475,9 +494,10 @@ def create_streaming_display(
             for tc, tr in visible:
                 elements.append(_render_tool_call_line(tc, tr))
                 content = tr.get('content', '') if tr else ''
-                if tr and not is_success(content):
+                if tr and (not is_success(content) or tc.get('name') == 'edit_file'):
                     result_elements = format_tool_result_compact(
                         tr['name'], content, max_lines=5,
+                        tool_args=tc.get('args'),
                     )
                     elements.extend(result_elements)
 
@@ -638,6 +658,7 @@ def display_final_results(
                     tr['name'],
                     content,
                     max_lines=10,
+                    tool_args=tc.get('args'),
                 )
                 for elem in result_elements:
                     console.print(elem)

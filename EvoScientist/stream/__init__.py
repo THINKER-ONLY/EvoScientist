@@ -30,6 +30,7 @@ from .utils import (
 )
 from .state import SubAgentState, StreamState, _parse_todo_items, _build_todo_stats
 from .events import stream_agent_events
+from .diff_format import build_edit_diff, format_diff_rich
 from .display import (
     console,
     formatter,
@@ -70,6 +71,9 @@ __all__ = [
     "_build_todo_stats",
     # Events
     "stream_agent_events",
+    # Diff formatting
+    "build_edit_diff",
+    "format_diff_rich",
     # Display
     "console",
     "formatter",

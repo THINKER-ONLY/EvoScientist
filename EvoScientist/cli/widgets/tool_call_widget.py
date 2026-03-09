@@ -8,6 +8,7 @@ from textual.containers import Vertical
 from textual.events import Click
 from textual.widgets import Static
 
+from ...stream.diff_format import build_edit_diff
 from ...stream.utils import format_tool_compact
 
 _SPINNER_FRAMES = "\u280b\u2819\u2839\u2838\u283c\u2834\u2826\u2827\u2807\u280f"
@@ -65,6 +66,7 @@ class ToolCallWidget(Vertical):
         self._tool_id = tool_id
         self._status = "running"
         self._result_content = ""
+        self._diff_markup: str | None = None  # cached full diff for toggle
         self._frame = 0
         self._elapsed = 0.0
         self._timer_handle = None
@@ -186,6 +188,27 @@ class ToolCallWidget(Vertical):
         output_w = self.query_one(".tool-output", Static)
         if not self._result_content.strip():
             return
+        # Diff rendering for edit_file (never truncates — collapses instead)
+        if self._tool_name == "edit_file" and self._status == "success" and self._tool_args:
+            old_str = self._tool_args.get("old_string", "")
+            new_str = self._tool_args.get("new_string", "")
+            path = self._tool_args.get("path", self._tool_args.get("file_path", ""))
+            if old_str and new_str and old_str != new_str:
+                diff_markup = build_edit_diff(path, old_str, new_str)
+                if diff_markup:
+                    self._diff_markup = diff_markup
+                    if diff_markup.count("\n") > _COLLAPSE_LINES:
+                        # Long diff: collapse, click to expand
+                        self._collapsed = True
+                        output_w.update(
+                            Text("  [click to expand diff]", style="dim italic"),
+                        )
+                    else:
+                        # Short diff: show inline
+                        self._collapsed = False
+                        output_w.update(diff_markup)
+                    output_w.add_class("--visible")
+                    return
         if self._status == "error" or not self._should_collapse():
             # Show full output for errors or short output
             self._collapsed = False
@@ -207,9 +230,23 @@ class ToolCallWidget(Vertical):
         """Toggle collapsed output on click."""
         if self._status == "running" or not self._result_content.strip():
             return
+        output_w = self.query_one(".tool-output", Static)
+
+        # Diff toggle (separate path — _should_collapse checks plain text,
+        # not the diff markup, so we handle it independently)
+        if self._diff_markup is not None:
+            if self._collapsed:
+                self._collapsed = False
+                output_w.update(self._diff_markup)
+            else:
+                self._collapsed = True
+                output_w.update(
+                    Text("  [click to expand diff]", style="dim italic"),
+                )
+            return
+
         if not self._should_collapse():
             return  # Short output is always visible, nothing to toggle
-        output_w = self.query_one(".tool-output", Static)
         if self._collapsed:
             # Expand
             self._collapsed = False
