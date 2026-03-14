@@ -7,6 +7,7 @@ workspace settings, and agent parameters. Uses flow-style arrow-key selection UI
 from __future__ import annotations
 
 import os
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -1257,29 +1258,47 @@ _RECOMMENDED_MCP_SERVERS = [
 ]
 
 
+def _pip_install_hint() -> str:
+    """Human-readable install command for error messages."""
+    if shutil.which("uv"):
+        return "uv pip install"
+    return "pip install"
+
+
 def _install_pip_package(package: str) -> bool:
     """Silently install a pip package.
+
+    Tries ``uv pip install`` first (works reliably in uv-managed
+    environments where ``pip`` may not be available), then falls back
+    to ``python -m pip install``.
 
     Returns:
         True if installation succeeded.
     """
-    try:
-        result = subprocess.run(
-            [sys.executable, "-m", "pip", "install", "-q", package],
-            capture_output=True,
-            text=True,
-            timeout=120,
-        )
-        if result.returncode == 0:
-            # Invalidate import caches so newly-installed packages are
-            # discoverable in the current process without a restart.
-            import importlib
+    # Build candidate command lists: uv first (if available), then pip.
+    commands: list[list[str]] = []
+    if shutil.which("uv"):
+        commands.append(["uv", "pip", "install", "-q", package])
+    commands.append([sys.executable, "-m", "pip", "install", "-q", package])
 
-            importlib.invalidate_caches()
-            return True
-        return False
-    except (FileNotFoundError, subprocess.TimeoutExpired):
-        return False
+    for cmd in commands:
+        try:
+            result = subprocess.run(
+                cmd,
+                capture_output=True,
+                text=True,
+                timeout=120,
+            )
+            if result.returncode == 0:
+                # Invalidate import caches so newly-installed packages are
+                # discoverable in the current process without a restart.
+                import importlib
+
+                importlib.invalidate_caches()
+                return True
+        except (FileNotFoundError, subprocess.TimeoutExpired):
+            continue
+    return False
 
 
 def _step_mcp_servers() -> list[str]:
@@ -1381,7 +1400,7 @@ def _step_mcp_servers() -> list[str]:
                 console.print(f"  [dim]Installing {pip_pkg}...[/dim]")
                 if not _install_pip_package(pip_pkg):
                     _print_step_result(
-                        "MCP", f"{name} — pip install {pip_pkg} failed", success=False
+                        "MCP", f"{name} — {_pip_install_hint()} {pip_pkg} failed", success=False
                     )
                     continue
 
@@ -1743,7 +1762,7 @@ def _step_channels(config: EvoScientistConfig) -> dict[str, object]:
                     else:
                         console.print("  [red]✗ Installation failed.[/red]")
                         console.print(
-                            f'  [dim]Run manually:[/dim] pip install {_pkg_display}'
+                            f'  [dim]Run manually:[/dim] {_pip_install_hint()} {_pkg_display}'
                         )
             if not _pkg_ready:
                 continue
